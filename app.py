@@ -1,5 +1,8 @@
-import streamlit as st
 import os
+os.environ["CREWAI_DISABLE_MEMORY"] = "true"
+
+
+import streamlit as st
 from dotenv import load_dotenv
 from crewai import Crew, Task
 import json
