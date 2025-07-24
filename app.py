@@ -34,7 +34,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS
+# Enhanced CSS for better UI
 st.markdown("""
 <style>
 .main-header {
@@ -50,6 +50,151 @@ st.markdown("""
 .working { background-color: #fff3cd; border-left: 5px solid #ffc107; }
 .completed { background-color: #d4edda; border-left: 5px solid #28a745; }
 .error { background-color: #f8d7da; border-left: 5px solid #dc3545; }
+
+/* Product Card Styling */
+.product-card {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding: 20px;
+    border-radius: 15px;
+    margin: 15px 0;
+    border: 1px solid #e0e6ed;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+}
+
+.product-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.product-rank {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 8px 15px;
+    border-radius: 25px;
+    font-weight: bold;
+    margin-right: 15px;
+    font-size: 16px;
+}
+
+.product-title {
+    color: #2c3e50;
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0;
+    flex: 1;
+}
+
+.product-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 15px;
+    margin: 15px 0;
+}
+
+.detail-item {
+    text-align: center;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 10px;
+}
+
+.detail-label {
+    font-size: 12px;
+    color: #7f8c8d;
+    font-weight: 500;
+    margin-bottom: 5px;
+}
+
+.detail-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.price-value {
+    color: #e74c3c;
+    font-size: 18px;
+}
+
+.rating-value {
+    color: #f39c12;
+}
+
+.product-description {
+    background: rgba(255, 255, 255, 0.8);
+    padding: 12px;
+    border-radius: 8px;
+    margin: 10px 0;
+    font-style: italic;
+    color: #5d6d7e;
+}
+
+.buy-button {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 25px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+    margin-top: 10px;
+    transition: transform 0.2s;
+}
+
+.buy-button:hover {
+    transform: translateY(-2px);
+    text-decoration: none;
+    color: white;
+}
+
+/* Recommendation Cards */
+.recommendation-card {
+    background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+    padding: 20px;
+    border-radius: 15px;
+    margin: 10px 0;
+    border-left: 5px solid #ff6b6b;
+}
+
+.recommendation-title {
+    color: #d63031;
+    font-weight: 600;
+    font-size: 18px;
+    margin-bottom: 8px;
+}
+
+.recommendation-text {
+    color: #2d3436;
+    line-height: 1.6;
+}
+
+/* Final Choice Card */
+.final-choice {
+    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    padding: 25px;
+    border-radius: 20px;
+    margin: 20px 0;
+    border: 2px solid #00b894;
+    text-align: center;
+}
+
+.final-choice h3 {
+    color: #00b894;
+    margin-bottom: 15px;
+}
+
+/* Section Headers */
+.section-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 10px;
+    margin: 20px 0 15px 0;
+    font-size: 20px;
+    font-weight: 600;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -151,6 +296,41 @@ def create_tasks(agents, user_query):
     
     return [research_task, analysis_task, recommendation_task, purchase_task]
 
+def display_product_card(product, index):
+    """Display a beautifully formatted product card"""
+    st.markdown(f"""
+    <div class="product-card">
+        <div class="product-header">
+            <div class="product-rank">#{index + 1}</div>
+            <h3 class="product-title">{product.get('title', product.get('Title', 'N/A'))}</h3>
+        </div>
+        
+        <div class="product-details">
+            <div class="detail-item">
+                <div class="detail-label">💰 PRICE</div>
+                <div class="detail-value price-value">{product.get('price', product.get('Price', 'N/A'))}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">⭐ RATING</div>
+                <div class="detail-value rating-value">{product.get('rating', product.get('Rating', 'N/A'))}/5</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">🛒 AVAILABILITY</div>
+                <div class="detail-value">In Stock</div>
+            </div>
+        </div>
+        
+        <div class="product-description">
+            📝 {product.get('description', product.get('Brief description', 'No description available'))}
+        </div>
+        
+        <a href="{product.get('buy_url', product.get('purchase_url', product.get('Purchase URL', '#')))}" 
+           target="_blank" class="buy-button">
+            🛒 Buy Now
+        </a>
+    </div>
+    """, unsafe_allow_html=True)
+
 def main():
     """Main Streamlit application"""
     
@@ -171,10 +351,10 @@ def main():
         st.write(f"**RapidAPI:** {rapidapi_status}")
         
         st.header("📊 System Info")
-        st.write("**Research Agent:** Mixtral")
-        st.write("**Analysis Agent:** LLaMA 3.1") 
-        st.write("**Recommendation Agent:** Mixtral")
-        st.write("**Purchase Agent:** LLaMA 3.1")
+        st.write("**Research Agent:** LLaMA 3.3 70B")
+        st.write("**Analysis Agent:** LLaMA 3.1 8B") 
+        st.write("**Recommendation Agent:** LLaMA 3.3 70B")
+        st.write("**Purchase Agent:** LLaMA 3.1 8B")
     
     # Main interface
     col1, col2 = st.columns([2, 1])
@@ -250,53 +430,105 @@ def main():
             progress_bar.progress(100)
             status_text.text("✅ Search completed!")
             
-            # Display results
-            st.success("🎉 Found products for you!")
+            # Clear progress indicators
+            progress_bar.empty()
+            status_text.empty()
             
-            # Try to parse the final result
+            # Parse and display results
             try:
-                if isinstance(result, str):
-                    final_data = clean_json_response(result)
+                # Parse the result from the crew
+                if hasattr(result, 'raw'):
+                    result_data = json.loads(result.raw)
+                elif isinstance(result, str):
+                    result_data = json.loads(result)
                 else:
-                    final_data = result
+                    result_data = result
                 
-                # Check if we got valid products
-                if not final_data.get('products') or len(final_data.get('products', [])) == 0:
-                    if final_data.get('success') == False:
-                        st.error(f"❌ Product search failed: {final_data.get('message', 'Unknown error')}")
+                # Extract task outputs for better processing
+                if hasattr(result, 'tasks_output') and result.tasks_output:
+                    # Get products from research task
+                    research_output = result.tasks_output[0]
+                    if hasattr(research_output, 'raw'):
+                        products_data = json.loads(research_output.raw)
+                        products = products_data.get('products', [])
                     else:
-                        st.warning("⚠️ No products found for your query. Try a different search term.")
-                    st.stop()
+                        products = []
+                    
+                    # Get recommendations from recommendation task
+                    if len(result.tasks_output) > 2:
+                        rec_output = result.tasks_output[2]
+                        if hasattr(rec_output, 'raw'):
+                            rec_data = json.loads(rec_output.raw)
+                            recommendations = rec_data.get('recommendations', [])
+                        else:
+                            recommendations = []
+                    else:
+                        recommendations = []
+                    
+                    # Get final choice from purchase task
+                    if len(result.tasks_output) > 3:
+                        final_output = result.tasks_output[3]
+                        if hasattr(final_output, 'raw'):
+                            final_data = json.loads(final_output.raw)
+                            best_choice = final_data.get('best_purchase_option', {})
+                        else:
+                            best_choice = {}
+                    else:
+                        best_choice = {}
                 
-                # Display products
-                st.subheader("🛍️ Product Results")
+                else:
+                    # Fallback parsing
+                    products = result_data.get('products', [])
+                    recommendations = result_data.get('recommendations', [])
+                    best_choice = result_data.get('best_purchase_option', {})
                 
-                for idx, product in enumerate(final_data['products']):
-                    with st.container():
-                        st.markdown(f"### #{idx + 1}")
-                        format_product_card(product)
-                        st.divider()
+                # Display results with beautiful formatting
+                if products:
+                    st.markdown('<div class="section-header">🛍️ Product Search Results</div>', unsafe_allow_html=True)
+                    
+                    for idx, product in enumerate(products[:6]):  # Limit to 6 products
+                        display_product_card(product, idx)
                 
-                # Display recommendations if available
-                if final_data.get('recommendations'):
-                    st.subheader("💡 AI Recommendations")
-                    for rec in final_data['recommendations']:
-                        st.info(f"**{rec.get('title', 'Recommendation')}:** {rec.get('reason', '')}")
+                # Display AI recommendations
+                if recommendations:
+                    st.markdown('<div class="section-header">💡 AI Recommendations</div>', unsafe_allow_html=True)
+                    
+                    for rec in recommendations:
+                        st.markdown(f"""
+                        <div class="recommendation-card">
+                            <div class="recommendation-title">🎯 {rec.get('title', 'Recommendation')}</div>
+                            <div class="recommendation-text">{rec.get('reasoning', rec.get('reason', 'No reasoning provided'))}</div>
+                        </div>
+                        """, unsafe_allow_html=True)
                 
-                # Display final purchase advice
-                if final_data.get('final_recommendation'):
-                    st.subheader("🎯 Best Choice")
-                    st.success(final_data['final_recommendation'])
+                # Display final choice
+                if best_choice:
+                    st.markdown('<div class="section-header">🏆 Best Choice Recommendation</div>', unsafe_allow_html=True)
+                    
+                    st.markdown(f"""
+                    <div class="final-choice">
+                        <h3>🎯 Our Top Pick: {best_choice.get('title', 'N/A')}</h3>
+                        <p><strong>💰 Price:</strong> {best_choice.get('price', 'N/A')}</p>
+                        <p><strong>⭐ Rating:</strong> {best_choice.get('rating', 'N/A')}/5</p>
+                        <br>
+                        <a href="{best_choice.get('purchase_url', '#')}" target="_blank" class="buy-button">
+                            🛒 Buy This Product Now
+                        </a>
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                # Success message
+                st.success("🎉 Search completed successfully! Review the recommendations above.")
                 
             except Exception as e:
-                # Fallback: display raw result
-                st.subheader("📋 Results")
-                st.write(result)
+                # Fallback: display raw result in a nice format
+                st.markdown('<div class="section-header">📋 Search Results</div>', unsafe_allow_html=True)
+                st.json(result.raw if hasattr(result, 'raw') else str(result))
                 
         except Exception as e:
             st.error(f"❌ Error during search: {str(e)}")
-            progress_bar.progress(0)
-            status_text.text("❌ Search failed")
+            progress_bar.empty()
+            status_text.empty()
     
     # Footer
     st.markdown("---")
