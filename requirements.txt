@@ -1,0 +1,7 @@
+streamlit==1.28.1
+crewai==0.28.8
+groq==0.4.1
+requests==2.31.0
+python-dotenv==1.0.0
+pandas==2.0.3
+pillow==10.0.1
