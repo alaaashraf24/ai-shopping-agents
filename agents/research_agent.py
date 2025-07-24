@@ -1,11 +1,8 @@
 from crewai import Agent
-from groq import Groq
 import os
 
 def create_research_agent(rapidapi_tool):
-    """Create the Research Agent using Mixtral"""
-    
-    groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+    """Create the Research Agent using Mixtral - Free Version"""
     
     return Agent(
         role='Product Research Specialist',
@@ -16,6 +13,7 @@ def create_research_agent(rapidapi_tool):
         verbose=True,
         allow_delegation=False,
         tools=[rapidapi_tool],
-        llm=groq_client,
+        # Use string model name instead of client object
+        llm="groq/mixtral-8x7b-32768",
         max_iter=3
     )

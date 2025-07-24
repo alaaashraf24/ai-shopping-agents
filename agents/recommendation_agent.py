@@ -1,11 +1,8 @@
 from crewai import Agent
-from groq import Groq
 import os
 
 def create_recommendation_agent():
-    """Create the Recommendation Agent using Mixtral"""
-    
-    groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+    """Create the Recommendation Agent using Mixtral - Free Version"""
     
     return Agent(
         role='Personal Shopping Advisor',
@@ -16,6 +13,7 @@ def create_recommendation_agent():
         and budget constraints.""",
         verbose=True,
         allow_delegation=False,
-        llm=groq_client,
+        # Use string model name instead of client object
+        llm="groq/mixtral-8x7b-32768",
         max_iter=2
     )

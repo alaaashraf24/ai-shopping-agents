@@ -1,11 +1,8 @@
 from crewai import Agent
-from groq import Groq
 import os
 
 def create_analysis_agent():
-    """Create the Analysis Agent using LLaMA 3.1"""
-    
-    groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+    """Create the Analysis Agent using LLaMA 3.1 - Free Version"""
     
     return Agent(
         role='Product Analysis Expert',
@@ -16,6 +13,7 @@ def create_analysis_agent():
         ratio, user ratings, and feature completeness.""",
         verbose=True,
         allow_delegation=False,
-        llm=groq_client,
+        # Use string model name instead of client object
+        llm="groq/llama-3.1-70b-versatile",
         max_iter=2
     )

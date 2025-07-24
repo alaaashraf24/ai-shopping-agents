@@ -1,11 +1,8 @@
 from crewai import Agent
-from groq import Groq
 import os
 
 def create_purchase_agent():
-    """Create the Purchase Assistant Agent using LLaMA 3.1"""
-    
-    groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+    """Create the Purchase Assistant Agent using LLaMA 3.1 - Free Version"""
     
     return Agent(
         role='Purchase Decision Assistant',
@@ -15,6 +12,7 @@ def create_purchase_agent():
         of recommendations and providing clear, actionable next steps for purchase.""",
         verbose=True,
         allow_delegation=False,
-        llm=groq_client,
+        # Use string model name instead of client object
+        llm="groq/llama-3.1-70b-versatile",
         max_iter=1
     )
