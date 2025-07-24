@@ -7,4 +7,5 @@ pandas>=2.0.0
 pillow>=10.0.0
 crewai-tools>=0.12.0
 chromadb>=0.4.22
+pysqlite3-binary
 
