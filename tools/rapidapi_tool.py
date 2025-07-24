@@ -1,43 +1,52 @@
 import requests
 import os
-from crewai_tools import BaseTool
+import json  # Added missing json import
+# Fixed import for newer CrewAI versions
+try:
+    from crewai.tools import BaseTool
+except ImportError:
+    try:
+        from crewai_tools import BaseTool
+    except ImportError:
+        from crewai.tool import BaseTool
+
 from typing import Any
 
 class RapidAPIShoppingTool(BaseTool):
     name: str = "Product Search Tool"
     description: str = "Search for products using RapidAPI shopping endpoints"
-    
+         
     def _run(self, query: str) -> str:
         """Search for products via RapidAPI"""
         rapidapi_key = os.getenv("RAPIDAPI_KEY")
-        
+                 
         if not rapidapi_key:
             return json.dumps({
                 "error": "RapidAPI key not found",
                 "products": []
             })
-        
+                 
         # Using Real-Time Product Search API (example endpoint)
         url = "https://real-time-product-search.p.rapidapi.com/search"
-        
+                 
         headers = {
             "X-RapidAPI-Key": rapidapi_key,
             "X-RapidAPI-Host": "real-time-product-search.p.rapidapi.com"
         }
-        
+                 
         params = {
             "q": query,
             "country": "us",
             "language": "en",
             "limit": "10"
         }
-        
+                 
         try:
             response = requests.get(url, headers=headers, params=params, timeout=10)
-            
+                         
             if response.status_code == 200:
                 data = response.json()
-                
+                                 
                 # Format the response for agents
                 products = []
                 for item in data.get('data', [])[:8]:  # Limit to 8 products
@@ -50,7 +59,7 @@ class RapidAPIShoppingTool(BaseTool):
                         'description': item.get('product_description', '')[:200] + '...' if item.get('product_description') else ''
                     }
                     products.append(product)
-                
+                                 
                 return json.dumps({
                     "success": True,
                     "products": products,
@@ -63,7 +72,7 @@ class RapidAPIShoppingTool(BaseTool):
                     "message": "Unable to fetch products. Please check your RapidAPI key and try again.",
                     "products": []
                 })
-                
+                         
         except requests.exceptions.Timeout:
             return json.dumps({
                 "success": False,
