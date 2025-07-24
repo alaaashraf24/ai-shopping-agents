@@ -13,7 +13,7 @@ def create_analysis_agent():
         ratio, user ratings, and feature completeness.""",
         verbose=True,
         allow_delegation=False,
-        # Use string model name instead of client object
-        llm="groq/llama-3.1-70b-versatile",
+        # Use current available Groq model
+        llm="groq/llama-3.1-8b-instant",
         max_iter=2
     )

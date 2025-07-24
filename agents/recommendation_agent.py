@@ -13,7 +13,7 @@ def create_recommendation_agent():
         and budget constraints.""",
         verbose=True,
         allow_delegation=False,
-        # Use string model name instead of client object
-        llm="groq/mixtral-8x7b-32768",
+        # Use current available Groq model
+        llm="groq/llama-3.3-70b-versatile",
         max_iter=2
     )

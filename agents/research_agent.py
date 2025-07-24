@@ -13,7 +13,7 @@ def create_research_agent(rapidapi_tool):
         verbose=True,
         allow_delegation=False,
         tools=[rapidapi_tool],
-        # Use string model name instead of client object
-        llm="groq/mixtral-8x7b-32768",
+        # Use current available Groq model
+        llm="groq/llama-3.3-70b-versatile",
         max_iter=3
     )
