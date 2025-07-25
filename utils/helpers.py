@@ -41,7 +41,10 @@ def format_product_card(product):
         rating = product.get('rating', product.get('Rating', 'N/A'))
         description = product.get('description', product.get('Brief description', product.get('description', 'No description available')))
         image_url = product.get('image_url', product.get('Image URL', ''))
-        buy_url = product.get('buy_url', product.get('purchase_url', product.get('Purchase URL', '')))
+        
+        # IMPROVED: Try multiple URL fields and use product ID for specific URLs
+        buy_url = product.get('buy_url', product.get('purchase_url', product.get('Purchase URL', product.get('url', ''))))
+        product_id = product.get('asin', product.get('product_id', product.get('id', '')))
         
         # Clean up rating format (remove extra /5/5)
         if isinstance(rating, str) and '/5/5' in rating:
@@ -70,18 +73,18 @@ def format_product_card(product):
             else:
                 st.markdown("**📝 Description:** *No description available*")
             
-            # Buy button
-            if buy_url and buy_url.strip() and buy_url != 'N/A':
-                # Check if it's a working URL
-                if buy_url.startswith('http'):
-                    st.link_button("🛒 View Product", buy_url, help="Click to view this product")
-                else:
-                    st.markdown("🔗 *Purchase link not available*")
+            # IMPROVED: Better URL handling with specific product links
+            if buy_url and buy_url.strip() and buy_url != 'N/A' and validate_url(buy_url):
+                # Use the specific product URL
+                st.link_button("🛒 View Product", buy_url, help="Click to view this product")
+            elif product_id:
+                # Create specific Amazon product URL using ASIN/Product ID
+                specific_url = f"https://www.amazon.com/dp/{product_id}"
+                st.link_button("🛒 View Product", specific_url, help="Click to view this specific product")
             else:
-                # Create a search link as fallback
-                search_query = title.replace(' ', '+')
-                search_url = f"https://www.amazon.com/s?k={search_query}"
-                st.link_button("🔍 Search on Amazon", search_url, help="Search for this product on Amazon")
+                # Create a more specific search as fallback
+                search_url = create_specific_search_url(title, price)
+                st.link_button("🔍 Find This Product", search_url, help="Search for this specific product")
     
     except Exception as e:
         st.error(f"Error displaying product: {e}")
@@ -112,3 +115,39 @@ def create_search_fallback_url(product_title):
     clean_title = re.sub(r'[^\w\s]', '', product_title)  # Remove special characters
     search_query = clean_title.replace(' ', '+')
     return f"https://www.amazon.com/s?k={search_query}"
+
+def create_specific_search_url(title, price):
+    """Create a more specific search URL using title and price"""
+    # Clean the title and add price range if available
+    clean_title = re.sub(r'[^\w\s]', '', title)
+    search_query = clean_title.replace(' ', '+')
+    
+    # Try to extract price number for better search
+    if price and price != 'N/A':
+        price_match = re.search(r'\d+', str(price))
+        if price_match:
+            price_num = int(price_match.group())
+            # Add price range to search
+            search_query += f"+under+{price_num + 50}"
+    
+    return f"https://www.amazon.com/s?k={search_query}&ref=sr_st_price-asc-rank"
+
+def extract_product_id_from_url(url):
+    """Extract Amazon ASIN or product ID from URL"""
+    if not url:
+        return None
+    
+    # Try to extract ASIN from Amazon URLs
+    asin_patterns = [
+        r'/dp/([A-Z0-9]{10})',
+        r'/product/([A-Z0-9]{10})',
+        r'asin=([A-Z0-9]{10})',
+        r'/([A-Z0-9]{10})(?:/|$)'
+    ]
+    
+    for pattern in asin_patterns:
+        match = re.search(pattern, url)
+        if match:
+            return match.group(1)
+    
+    return None

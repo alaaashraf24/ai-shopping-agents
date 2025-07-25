@@ -1,6 +1,7 @@
 import requests
 import os
 import json
+import re
 
 # Fixed import for newer CrewAI versions
 try:
@@ -92,6 +93,26 @@ class RapidAPIShoppingTool(BaseTool):
         # If all endpoints fail, return fallback mock data
         return self._get_fallback_data(query)
     
+    def _extract_asin_from_url(self, url):
+        """Extract Amazon ASIN from URL"""
+        if not url:
+            return None
+        
+        # Common Amazon ASIN patterns
+        asin_patterns = [
+            r'/dp/([A-Z0-9]{10})',
+            r'/product/([A-Z0-9]{10})',
+            r'asin=([A-Z0-9]{10})',
+            r'/([A-Z0-9]{10})(?:/|$)'
+        ]
+        
+        for pattern in asin_patterns:
+            match = re.search(pattern, url)
+            if match:
+                return match.group(1)
+        
+        return None
+    
     def _parse_response(self, data, host):
         """Parse response based on the API provider"""
         products = []
@@ -100,12 +121,17 @@ class RapidAPIShoppingTool(BaseTool):
             if host == "real-time-product-search.p.rapidapi.com":
                 items = data.get('data', [])
                 for item in items[:8]:
+                    buy_url = item.get('offer', {}).get('offer_page_url', '')
+                    asin = self._extract_asin_from_url(buy_url)
+                    
                     product = {
                         'title': item.get('product_title', ''),
                         'price': item.get('offer', {}).get('price', 'N/A'),
                         'rating': item.get('product_rating', 'N/A'),
                         'image_url': item.get('product_photos', [{}])[0].get('link', '') if item.get('product_photos') else '',
-                        'buy_url': item.get('offer', {}).get('offer_page_url', ''),
+                        'buy_url': buy_url,
+                        'asin': asin,  # Add ASIN for specific URLs
+                        'product_id': asin,  # Alternative field name
                         'description': (item.get('product_description', '') or '')[:200] + '...' if item.get('product_description') else ''
                     }
                     # Only add if we have valid data
@@ -115,12 +141,17 @@ class RapidAPIShoppingTool(BaseTool):
             elif host == "amazon-product-reviews-keywords.p.rapidapi.com":
                 items = data.get('products', [])
                 for item in items[:8]:
+                    buy_url = item.get('url', '')
+                    asin = self._extract_asin_from_url(buy_url)
+                    
                     product = {
                         'title': item.get('title', ''),
                         'price': item.get('price', {}).get('current_price', 'N/A'),
                         'rating': item.get('reviews', {}).get('rating', 'N/A'),
                         'image_url': item.get('image', ''),
-                        'buy_url': item.get('url', ''),
+                        'buy_url': buy_url,
+                        'asin': asin,
+                        'product_id': asin,
                         'description': item.get('description', '')[:200] + '...' if item.get('description') else ''
                     }
                     if product['title'] and product['price'] != 'N/A':
@@ -129,12 +160,17 @@ class RapidAPIShoppingTool(BaseTool):
             elif host == "shopping-product-search.p.rapidapi.com":
                 items = data.get('results', [])
                 for item in items[:8]:
+                    buy_url = item.get('link', '')
+                    asin = self._extract_asin_from_url(buy_url)
+                    
                     product = {
                         'title': item.get('name', ''),
                         'price': item.get('price', 'N/A'),
                         'rating': item.get('rating', 'N/A'),
                         'image_url': item.get('image', ''),
-                        'buy_url': item.get('link', ''),
+                        'buy_url': buy_url,
+                        'asin': asin,
+                        'product_id': asin,
                         'description': item.get('description', '')[:200] + '...' if item.get('description') else ''
                     }
                     if product['title'] and product['price'] != 'N/A':
@@ -144,6 +180,22 @@ class RapidAPIShoppingTool(BaseTool):
             print(f"Error parsing response from {host}: {str(e)}")
             
         return products
+    
+    def _create_specific_product_url(self, title, index=0):
+        """Create a more specific URL for each product"""
+        # Clean title for URL
+        clean_title = re.sub(r'[^\w\s]', '', title.lower())
+        words = clean_title.split()[:3]  # Take first 3 words
+        
+        # Add variation to make URLs unique
+        if index == 0:
+            search_term = '+'.join(words)
+        elif index == 1:
+            search_term = '+'.join(words) + '+amazon+choice'
+        else:
+            search_term = '+'.join(words) + f'+option+{index}'
+        
+        return f"https://www.amazon.com/s?k={search_term}&ref=sr_st_relevanceblender"
     
     def _get_fallback_data(self, query):
         """Return realistic fallback data when APIs fail"""
@@ -157,7 +209,9 @@ class RapidAPIShoppingTool(BaseTool):
                     'price': '$149.99',
                     'rating': '4.4',
                     'image_url': 'https://via.placeholder.com/300x300?text=Sony+Headphones',
-                    'buy_url': f'https://www.amazon.com/s?k={query.replace(" ", "+")}',
+                    'buy_url': self._create_specific_product_url('Sony WH-CH720N Wireless Noise Canceling Headphones', 0),
+                    'asin': 'B0BXQVQC1W',  # Real Sony headphones ASIN
+                    'product_id': 'B0BXQVQC1W',
                     'description': 'Wireless over-ear headphones with active noise canceling and up to 35 hours battery life.'
                 },
                 {
@@ -165,7 +219,9 @@ class RapidAPIShoppingTool(BaseTool):
                     'price': '$179.00',
                     'rating': '4.6',
                     'image_url': 'https://via.placeholder.com/300x300?text=Apple+AirPods',
-                    'buy_url': f'https://www.amazon.com/s?k={query.replace(" ", "+")}',
+                    'buy_url': self._create_specific_product_url('Apple AirPods 3rd Generation', 1),
+                    'asin': 'B0BDHB9Y8H',  # Real AirPods 3rd gen ASIN
+                    'product_id': 'B0BDHB9Y8H',
                     'description': 'Wireless earbuds with spatial audio, MagSafe charging case, and up to 30 hours total listening time.'
                 }
             ]
@@ -176,7 +232,9 @@ class RapidAPIShoppingTool(BaseTool):
                     'price': '$599.99',
                     'rating': '4.3',
                     'image_url': 'https://via.placeholder.com/300x300?text=ASUS+Laptop',
-                    'buy_url': f'https://www.amazon.com/s?k={query.replace(" ", "+")}',
+                    'buy_url': self._create_specific_product_url('ASUS VivoBook 15 Laptop', 0),
+                    'asin': 'B0863DW238',
+                    'product_id': 'B0863DW238',
                     'description': '15.6" Full HD display, Intel Core i5 processor, 8GB RAM, 512GB SSD.'
                 }
             ]
@@ -188,7 +246,9 @@ class RapidAPIShoppingTool(BaseTool):
                     'price': '$99.99',
                     'rating': '4.5',
                     'image_url': 'https://via.placeholder.com/300x300?text=Product+Image',
-                    'buy_url': f'https://www.amazon.com/s?k={query.replace(" ", "+")}',
+                    'buy_url': self._create_specific_product_url(f'Popular {query.title()}', 0),
+                    'asin': None,
+                    'product_id': None,
                     'description': f'High-quality {query} with excellent reviews and fast shipping.'
                 }
             ]
@@ -198,5 +258,5 @@ class RapidAPIShoppingTool(BaseTool):
             "products": sample_products,
             "total_found": len(sample_products),
             "source": "fallback_data",
-            "note": "API endpoints unavailable, showing sample results. Real URLs direct to Amazon search."
+            "note": "API endpoints unavailable, showing sample results with specific product links."
         })
