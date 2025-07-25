@@ -181,22 +181,6 @@ class RapidAPIShoppingTool(BaseTool):
             
         return products
     
-    def _create_specific_product_url(self, title, index=0):
-        """Create a more specific URL for each product"""
-        # Clean title for URL
-        clean_title = re.sub(r'[^\w\s]', '', title.lower())
-        words = clean_title.split()[:3]  # Take first 3 words
-        
-        # Add variation to make URLs unique
-        if index == 0:
-            search_term = '+'.join(words)
-        elif index == 1:
-            search_term = '+'.join(words) + '+amazon+choice'
-        else:
-            search_term = '+'.join(words) + f'+option+{index}'
-        
-        return f"https://www.amazon.com/s?k={search_term}&ref=sr_st_relevanceblender"
-    
     def _get_fallback_data(self, query):
         """Return realistic fallback data when APIs fail"""
         # Create realistic sample products based on query
@@ -209,7 +193,7 @@ class RapidAPIShoppingTool(BaseTool):
                     'price': '$149.99',
                     'rating': '4.4',
                     'image_url': 'https://via.placeholder.com/300x300?text=Sony+Headphones',
-                    'buy_url': self._create_specific_product_url('Sony WH-CH720N Wireless Noise Canceling Headphones', 0),
+                    'buy_url': 'https://www.amazon.com/dp/B0BXQVQC1W',  # Direct ASIN link
                     'asin': 'B0BXQVQC1W',  # Real Sony headphones ASIN
                     'product_id': 'B0BXQVQC1W',
                     'description': 'Wireless over-ear headphones with active noise canceling and up to 35 hours battery life.'
@@ -219,7 +203,7 @@ class RapidAPIShoppingTool(BaseTool):
                     'price': '$179.00',
                     'rating': '4.6',
                     'image_url': 'https://via.placeholder.com/300x300?text=Apple+AirPods',
-                    'buy_url': self._create_specific_product_url('Apple AirPods 3rd Generation', 1),
+                    'buy_url': 'https://www.amazon.com/dp/B0BDHB9Y8H',  # Direct ASIN link
                     'asin': 'B0BDHB9Y8H',  # Real AirPods 3rd gen ASIN
                     'product_id': 'B0BDHB9Y8H',
                     'description': 'Wireless earbuds with spatial audio, MagSafe charging case, and up to 30 hours total listening time.'
@@ -232,24 +216,47 @@ class RapidAPIShoppingTool(BaseTool):
                     'price': '$599.99',
                     'rating': '4.3',
                     'image_url': 'https://via.placeholder.com/300x300?text=ASUS+Laptop',
-                    'buy_url': self._create_specific_product_url('ASUS VivoBook 15 Laptop', 0),
+                    'buy_url': 'https://www.amazon.com/dp/B0863DW238',
                     'asin': 'B0863DW238',
                     'product_id': 'B0863DW238',
                     'description': '15.6" Full HD display, Intel Core i5 processor, 8GB RAM, 512GB SSD.'
+                },
+                {
+                    'title': 'HP Pavilion 15 Laptop',
+                    'price': '$649.99',
+                    'rating': '4.2',
+                    'image_url': 'https://via.placeholder.com/300x300?text=HP+Laptop',
+                    'buy_url': 'https://www.amazon.com/dp/B08XLJ7ZBZ',
+                    'asin': 'B08XLJ7ZBZ',
+                    'product_id': 'B08XLJ7ZBZ',
+                    'description': '15.6" Full HD display, AMD Ryzen 5 processor, 8GB RAM, 256GB SSD.'
                 }
             ]
         else:
-            # Generic fallback
+            # Generic fallback with specific search URLs
+            clean_query = re.sub(r'[^\w\s]', '', query)
+            words = clean_query.split()[:3]
+            
             sample_products = [
                 {
-                    'title': f'Popular {query.title()} - Best Seller',
+                    'title': f'Best {query.title()} - Top Rated',
                     'price': '$99.99',
                     'rating': '4.5',
-                    'image_url': 'https://via.placeholder.com/300x300?text=Product+Image',
-                    'buy_url': self._create_specific_product_url(f'Popular {query.title()}', 0),
+                    'image_url': 'https://via.placeholder.com/300x300?text=Product+1',
+                    'buy_url': f'https://www.amazon.com/s?k={"+".join(words)}&crid=BESTSELLER',
                     'asin': None,
                     'product_id': None,
                     'description': f'High-quality {query} with excellent reviews and fast shipping.'
+                },
+                {
+                    'title': f'Premium {query.title()} - Amazon Choice',
+                    'price': '$149.99',
+                    'rating': '4.7',
+                    'image_url': 'https://via.placeholder.com/300x300?text=Product+2',
+                    'buy_url': f'https://www.amazon.com/s?k={"+".join(words)}+premium&crid=AMAZONCHOICE',
+                    'asin': None,
+                    'product_id': None,
+                    'description': f'Premium {query} with advanced features and excellent customer satisfaction.'
                 }
             ]
         
@@ -258,5 +265,5 @@ class RapidAPIShoppingTool(BaseTool):
             "products": sample_products,
             "total_found": len(sample_products),
             "source": "fallback_data",
-            "note": "API endpoints unavailable, showing sample results with specific product links."
+            "note": "API endpoints unavailable, showing sample results with working product links."
         })
